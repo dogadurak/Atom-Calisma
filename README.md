@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AtomÇalışma 🚀
 
-## Getting Started
+> *"Sınavı Şansa Değil, Sisteme Bırak"*
 
-First, run the development server:
+AtomÇalışma, LGS ve ortaokul öğrencilerine erken yaşta geniş bakış açıları kazandırmayı, onlara başarıya giden yolu çizmeyi ve akademik olarak desteklemeyi hedefleyen **%100 ücretsiz, kâr amacı gütmeyen bir sosyal girişim** projesidir. 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌟 Vizyonumuz ve Kurucular
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Amacımız sadece ders anlatmak değil; yapay zeka destekli koçluk, oyunlaştırılmış görevler ve profesyonel bireysel danışmanlık ile öğrencilerin başarıya giden yolda asla yalnız hissetmemelerini sağlamaktır. Eğitimde fırsat eşitliğine inandığımız için bu platformdaki her şey sonsuza dek ücretsiz kalacaktır.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Kurucularımız:**
+- **Beren Heycan:** Eğitim Koordinatörü & Kurucu Ortak *(Hacettepe Üniversitesi - Matematik Öğretmenliği Mezunu)*
+- **Doğa Durak:** Sistem Mimarı & Kurucu Ortak *(İzmir Katip Çelebi Üniversitesi - Harita Mühendisliği Öğrencisi)*
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## ✨ Temel Özellikler
 
-To learn more about Next.js, take a look at the following resources:
+### 🎓 1. Öğrenci Paneli (Student Dashboard)
+- **Zihin Haritası (Sinir Ağı Simülasyonu):** Öğrencileri motive eden, "Özgüven, Başarı, Vizyon, Odak" gibi kavramların animasyonlu nöron ateşlemeleriyle gösterildiği inovatif görsel harita.
+- **Ders Modülleri:** Konu anlatım videoları ve haftalık ders programı takibi.
+- **Pomodoro Odası:** Lofi müzikler eşliğinde kronometre ile odaklı çalışma modülü.
+- **Deneme Analizleri:** Girilen denemelerin net, puan ve sıralama grafiklerinin tutulduğu istatistik alanı.
+- **Öğrenci Profili:** Çözülen sorular, kazanılan rozetler ve çalışma serilerinin sergilendiği gamification (oyunlaştırma) altyapısı.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 👨‍🏫 2. Eğitmen (Koç) Paneli
+- Eğitmenlere (Beren & Doğa) özel olarak tasarlanmış, öğrencilerin iletişim bilgilerini ve sistemdeki son aktiflik durumlarını gösteren gelişmiş veri tablosu.
+- Öğrencilerin "Düzenli Çalışıyor" veya "Takip Edilmeli" gibi risk durumlarının otomatik tespiti.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🛠️ Kullanılan Teknolojiler
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Bu proje, maksimum hız, güvenlik ve profesyonel arayüz sunmak için en güncel web teknolojileri kullanılarak geliştirilmiştir.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Frontend:** Next.js 15 (App Router), React 19
+- **Stil & Tasarım:** Tailwind CSS v4, Lucide React (İkonlar)
+- **Animasyon:** Framer Motion
+- **Backend & Veritabanı:** Supabase (PostgreSQL, Row Level Security)
+- **Grafikler:** Recharts
+
+---
+
+## 🚀 Kurulum (Local'de Çalıştırma)
+
+Projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları izleyebilirsiniz:
+
+1. **Gereksinimler:** Bilgisayarınızda `Node.js` yüklü olmalıdır.
+2. **Bağımlılıkları Yükleyin:**
+   ```bash
+   npm install
+   ```
+3. **Geliştirme Sunucusunu Başlatın:**
+   ```bash
+   npm run dev
+   ```
+4. Tarayıcınızdan `http://localhost:3000` adresine giderek platformu inceleyebilirsiniz.
+
+> *Eğitmen (Koç) paneline gitmek için `http://localhost:3000/coach` adresini kullanabilirsiniz.*
+
+---
+*Bu proje, eğitimde bir fark yaratmak ve gençlere vizyon katmak amacıyla geliştirilmiştir. İyi çalışmalar!* 💡
