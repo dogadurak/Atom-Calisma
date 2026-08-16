@@ -1,26 +1,61 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-
-const data = [
-  { name: "Pzt", soru: 120 },
-  { name: "Sal", soru: 150 },
-  { name: "Çar", soru: 90 },
-  { name: "Per", soru: 180 },
-  { name: "Cum", soru: 210 },
-  { name: "Cmt", soru: 300 },
-  { name: "Paz", soru: 250 },
-];
+import { createClient } from "@/utils/supabase/client";
 
 export default function StudyStats() {
+  const [data, setData] = useState<{ name: string; dakika: number }[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { data: sessions } = await supabase
+        .from("pomodoro_sessions")
+        .select("duration_minutes, completed_at")
+        .eq("student_id", user.id)
+        .gte("completed_at", sevenDaysAgo.toISOString());
+
+      if (sessions) {
+        // Group by day of week
+        const days = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
+        const grouped = sessions.reduce((acc: any, session) => {
+          const date = new Date(session.completed_at);
+          const dayName = days[date.getDay()];
+          acc[dayName] = (acc[dayName] || 0) + session.duration_minutes;
+          return acc;
+        }, {});
+
+        // Build array ordered by past 7 days ending today
+        const chartData = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dayName = days[d.getDay()];
+          chartData.push({
+            name: dayName,
+            dakika: grouped[dayName] || 0
+          });
+        }
+        setData(chartData);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className="bg-white/80 dark:bg-[#0b1121]/80 backdrop-blur-xl rounded-[2rem] p-8 border border-black/5 dark:border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] col-span-1 lg:col-span-2">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-        <h2 className="text-2xl font-extrabold tracking-tight">Haftalık İvme Analizi</h2>
+        <h2 className="text-2xl font-extrabold tracking-tight">Haftalık Çalışma Analizi (Dakika)</h2>
         <select className="bg-white dark:bg-[#030712] border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-sm font-medium outline-none focus:border-cyan-500 transition-colors text-slate-600 dark:text-slate-300 shadow-sm cursor-pointer hover:border-cyan-500/50">
           <option>Bu Hafta</option>
-          <option>Geçen Hafta</option>
-          <option>Bu Ay</option>
         </select>
       </div>
 
@@ -59,7 +94,7 @@ export default function StudyStats() {
               itemStyle={{ color: "#06b6d4", fontWeight: "900" }}
               labelStyle={{ color: "#94a3b8", fontWeight: "500", marginBottom: "4px" }}
             />
-            <Bar dataKey="soru" fill="url(#colorCyan)" radius={[6, 6, 0, 0]} maxBarSize={45} />
+            <Bar dataKey="dakika" fill="url(#colorCyan)" radius={[6, 6, 0, 0]} maxBarSize={45} />
           </BarChart>
         </ResponsiveContainer>
       </div>

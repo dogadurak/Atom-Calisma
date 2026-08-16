@@ -1,42 +1,82 @@
 "use client";
 
-import { useState } from "react";
-import { BookOpen, PlayCircle, Clock, CalendarDays, CheckCircle2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { BookOpen, PlayCircle, Clock, CalendarDays, CheckCircle2, Circle } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 const GRADES = [
-  { id: 5, label: "5. Sınıf" },
-  { id: 6, label: "6. Sınıf" },
-  { id: 7, label: "7. Sınıf" },
   { id: 8, label: "8. Sınıf (LGS)" },
 ];
 
 const SUBJECTS = [
-  { id: "mat", name: "Matematik", color: "text-brand-blue", bg: "bg-brand-blue/10", border: "border-brand-blue/20" },
+  { id: "matematik", name: "Matematik", color: "text-brand-blue", bg: "bg-brand-blue/10", border: "border-brand-blue/20" },
   { id: "fen", name: "Fen Bilimleri", color: "text-green-500", bg: "bg-green-500/10", border: "border-green-500/20" },
   { id: "turkce", name: "Türkçe", color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" },
-  { id: "sosyal", name: "İnkılap / Sosyal", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
-  { id: "ing", name: "İngilizce", color: "text-brand-purple", bg: "bg-brand-purple/10", border: "border-brand-purple/20" },
 ];
 
-const WEEKLY_SCHEDULE = [
-  { day: "Pazartesi", lessons: ["Matematik (Çarpanlar)", "Türkçe (Paragraf)"] },
-  { day: "Salı", lessons: ["Fen Bilimleri (DNA)", "İngilizce (Unit 1)"] },
-  { day: "Çarşamba", lessons: ["Matematik (Üslü Sayılar)", "İnkılap Tarihi"] },
-  { day: "Perşembe", lessons: ["Türkçe (Sözcükte Anlam)", "Fen Bilimleri (Basınç)"] },
-  { day: "Cuma", lessons: ["Genel Deneme Sınavı"] },
-];
+const TOPICS: Record<string, string[]> = {
+  "matematik": ["Çarpanlar ve Katlar", "Üslü İfadeler", "Kareköklü İfadeler", "Veri Analizi", "Basit Olayların Olma Olasılığı"],
+  "fen": ["Mevsimler ve İklim", "DNA ve Genetik Kod", "Basınç", "Madde ve Endüstri"],
+  "turkce": ["Sözcükte Anlam", "Cümlede Anlam", "Paragrafta Anlam", "Fiilimsiler", "Cümlenin Öğeleri"]
+};
 
 export default function LessonsPage() {
   const [selectedGrade, setSelectedGrade] = useState(8);
-  const [selectedSubject, setSelectedSubject] = useState("mat");
+  const [selectedSubject, setSelectedSubject] = useState("matematik");
+  const [progress, setProgress] = useState<Record<string, string>>({}); // { topic_name: status }
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('subject_progress')
+        .select('*')
+        .eq('student_id', user.id)
+        .eq('course_name', selectedSubject);
+
+      if (data && !error) {
+        const progMap: Record<string, string> = {};
+        data.forEach(item => {
+          progMap[item.topic_name] = item.status;
+        });
+        setProgress(progMap);
+      }
+    };
+    fetchProgress();
+  }, [selectedSubject]);
+
+  const toggleStatus = async (topic: string) => {
+    const currentStatus = progress[topic] || 'not_started';
+    const newStatus = currentStatus === 'completed' ? 'not_started' : 'completed';
+    
+    // Optimistic update
+    setProgress(prev => ({ ...prev, [topic]: newStatus }));
+
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase.from('subject_progress').upsert({
+      student_id: user.id,
+      course_name: selectedSubject,
+      topic_name: topic,
+      status: newStatus
+    }, { onConflict: 'student_id, course_name, topic_name' });
+  };
+
+  const topics = TOPICS[selectedSubject] || [];
+  const completedCount = topics.filter(t => progress[t] === 'completed').length;
+  const progressPercent = topics.length > 0 ? Math.round((completedCount / topics.length) * 100) : 0;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold mb-2">Ders Programı & Modüller</h1>
-          <p className="text-foreground/60">Sınıfını seç ve haftalık hedeflerini tamamla.</p>
+          <h1 className="text-3xl font-extrabold mb-2">Konu Takibi & Modüller</h1>
+          <p className="text-foreground/60">Sınıfını seç ve ilerlemeni kaydet.</p>
         </div>
 
         {/* Grade Selector */}
@@ -82,29 +122,33 @@ export default function LessonsPage() {
           <div className="bg-card rounded-3xl p-6 border border-foreground/5 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <PlayCircle className="text-primary" /> Sıradaki Dersler
+                <PlayCircle className="text-primary" /> {SUBJECTS.find(s => s.id === selectedSubject)?.name} Konuları
               </h2>
               <span className="text-sm font-semibold px-3 py-1 bg-primary/10 text-primary rounded-full">
-                %45 Tamamlandı
+                %{progressPercent} Tamamlandı
               </span>
             </div>
 
             <div className="space-y-4">
-              {[1, 2, 3].map((module, idx) => (
+              {topics.map((topic, idx) => (
                 <div key={idx} className="group relative flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-2xl border border-foreground/5 bg-background hover:border-primary/30 transition-all gap-4">
-                  <div className="flex gap-4">
-                    <div className="relative w-32 h-20 bg-foreground/5 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                      <PlayCircle className="text-foreground/40 group-hover:text-primary transition-colors w-8 h-8" />
-                      {idx === 0 && (
-                         <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded font-mono">14:20</div>
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => toggleStatus(topic)}
+                      className="shrink-0 transition-colors"
+                    >
+                      {progress[topic] === 'completed' ? (
+                        <CheckCircle2 className="text-green-500 w-8 h-8" />
+                      ) : (
+                        <Circle className="text-foreground/20 hover:text-primary w-8 h-8" />
                       )}
-                    </div>
+                    </button>
                     <div>
-                      <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
-                        {idx === 0 ? "Çarpanlar ve Katlar - Yeni Nesil Soru Çözümü" : idx === 1 ? "Üslü İfadeler Kurallar" : "Kareköklü Sayılara Giriş"}
+                      <h3 className={`font-bold transition-colors ${progress[topic] === 'completed' ? 'text-foreground/50 line-through' : 'text-foreground group-hover:text-primary'}`}>
+                        {topic}
                       </h3>
-                      <p className="text-sm text-foreground/50 mt-1 line-clamp-2">
-                        LGS mantığında sorulan soruların kısa yolları ve dikkat edilmesi gereken püf noktalar.
+                      <p className="text-sm text-foreground/50 mt-1 line-clamp-1">
+                        Müfredata uygun LGS konu anlatımı ve soru çözümleri.
                       </p>
                     </div>
                   </div>
@@ -118,36 +162,21 @@ export default function LessonsPage() {
           </div>
         </div>
 
-        {/* Right Column: Weekly Schedule */}
+        {/* Right Column: Weekly Schedule (Mock) */}
         <div className="lg:col-span-1">
           <div className="bg-card rounded-3xl p-6 border border-foreground/5 shadow-sm sticky top-6">
             <div className="flex items-center gap-2 mb-6">
               <CalendarDays className="text-brand-orange w-6 h-6" />
-              <h2 className="text-xl font-bold">Haftalık Program</h2>
+              <h2 className="text-xl font-bold">Nasıl Çalışmalıyım?</h2>
             </div>
-
-            <div className="relative border-l-2 border-foreground/10 ml-3 space-y-6">
-              {WEEKLY_SCHEDULE.map((schedule, idx) => (
-                <div key={idx} className="relative pl-6">
-                  <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-card ${idx === 0 ? "bg-primary" : "bg-foreground/20"}`}></div>
-                  <h3 className={`font-bold mb-2 ${idx === 0 ? "text-primary" : "text-foreground"}`}>
-                    {schedule.day}
-                    {idx === 0 && <span className="ml-2 text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase">Bugün</span>}
-                  </h3>
-                  <ul className="space-y-2">
-                    {schedule.lessons.map((lesson, lIdx) => (
-                      <li key={lIdx} className="flex items-center gap-2 text-sm text-foreground/70">
-                        {idx === 0 ? (
-                          <CheckCircle2 size={16} className={lIdx === 0 ? "text-green-500" : "text-foreground/20"} />
-                        ) : (
-                          <div className="w-4 h-4 rounded-full border-2 border-foreground/10" />
-                        )}
-                        <span className={idx === 0 && lIdx === 0 ? "line-through opacity-50" : ""}>{lesson}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+            <p className="text-sm text-foreground/70 mb-4">
+              Seçtiğin dersteki konuları sırasıyla takip et. Önce konu anlatımını izle, ardından en az 2 test çözerek pekiştir.
+            </p>
+            <div className="p-4 bg-brand-orange/10 rounded-xl border border-brand-orange/20">
+              <h4 className="font-bold text-brand-orange mb-2">Koç Tavsiyesi 💡</h4>
+              <p className="text-xs text-foreground/80 leading-relaxed">
+                "Konuyu bitirdiğini hissetmeden yeni konuya geçme. Yanlış yaptığın soruların çözümünü mutlaka öğren."
+              </p>
             </div>
           </div>
         </div>

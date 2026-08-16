@@ -1,31 +1,80 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Play, Pause, RotateCcw, Music, Settings, CheckCircle2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function PomodoroPage() {
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const POMODORO_TIME = 25 * 60;
+  const [timeLeft, setTimeLeft] = useState(POMODORO_TIME);
   const [isActive, setIsActive] = useState(false);
-  const [completedPomodoros, setCompletedPomodoros] = useState(3);
+  const [completedPomodoros, setCompletedPomodoros] = useState(0);
+  const router = useRouter();
 
-  // Timer logic mock
+  const sessionLogged = useRef(false);
+
+  useEffect(() => {
+    const fetchTodayPomodoros = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from('pomodoro_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('student_id', user.id)
+        .gte('completed_at', today.toISOString());
+      
+      if (count !== null) setCompletedPomodoros(count);
+    };
+
+    fetchTodayPomodoros();
+  }, []);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft((time) => time - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (timeLeft === 0 && !sessionLogged.current) {
       setIsActive(false);
+      sessionLogged.current = true;
+      logPomodoro();
     }
     return () => clearInterval(interval);
   }, [isActive, timeLeft]);
 
-  const toggleTimer = () => setIsActive(!isActive);
+  const logPomodoro = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase.from('pomodoro_sessions').insert({
+      student_id: user.id,
+      duration_minutes: 25,
+      subject: 'Genel Çalışma' // Default for now
+    });
+
+    setCompletedPomodoros(prev => prev + 1);
+  };
+
+  const toggleTimer = () => {
+    if (timeLeft === 0) {
+      setTimeLeft(POMODORO_TIME);
+      sessionLogged.current = false;
+    }
+    setIsActive(!isActive);
+  };
+
   const resetTimer = () => {
     setIsActive(false);
-    setTimeLeft(25 * 60);
+    setTimeLeft(POMODORO_TIME);
+    sessionLogged.current = false;
   };
 
   const formatTime = (seconds: number) => {
@@ -34,7 +83,7 @@ export default function PomodoroPage() {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const progressPercentage = ((25 * 60 - timeLeft) / (25 * 60)) * 100;
+  const progressPercentage = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">

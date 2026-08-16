@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, PlayCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -32,13 +33,13 @@ export default function Hero() {
             Derslerden çok daha fazlası. Geleceğine yön verecek bakış açıları, yapay zeka destekli koçluk ve tamamen ücretsiz bir gelişim platformu.
           </p>
           <p className="text-sm md:text-base text-foreground/50 max-w-2xl mx-auto mb-10">
-            <span className="font-bold text-foreground/70">Beren Heycan</span> (Hacettepe Üniversitesi) ve <span className="font-bold text-foreground/70">Doğa Durak</span> (İzmir Katip Çelebi Üniversitesi) tarafından hayata geçirilen, kâr amacı gütmeyen eğitim teknolojileri girişimi.
+            Öğrencilerin akademik başarılarını artırmak ve onlara rehberlik etmek amacıyla hayata geçirilen, kâr amacı gütmeyen eğitim teknolojileri girişimi.
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-            <button className="w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground rounded-full font-bold text-lg hover:bg-primary/90 transition-transform transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-primary/30">
+            <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground rounded-full font-bold text-lg hover:bg-primary/90 transition-transform transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg shadow-primary/30">
               Hemen Ücretsiz Dene <ArrowRight size={20} />
-            </button>
+            </Link>
             <button className="w-full sm:w-auto px-8 py-4 bg-card text-card-foreground border border-foreground/10 rounded-full font-bold text-lg hover:bg-foreground/5 transition-transform transform hover:scale-105 flex items-center justify-center gap-2">
               <PlayCircle size={20} /> Sistemi İncele
             </button>

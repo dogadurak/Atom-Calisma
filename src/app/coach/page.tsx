@@ -1,15 +1,37 @@
-"use client";
+import { createClient } from "@/utils/supabase/server";
+import { Phone, Mail, MoreVertical, ShieldAlert, CheckCircle2, Users, CheckCircle, Clock } from "lucide-react";
+import { redirect } from "next/navigation";
 
-import { Phone, Mail, MoreVertical, ShieldAlert, CheckCircle2 } from "lucide-react";
+export default async function CoachDashboardPage() {
+  const supabase = await createClient();
+  // TEMPORARY BYPASS
+  // const { data: { user } } = await supabase.auth.getUser();
+  // if (!user) {
+  //   redirect("/login");
+  // }
 
-const MOCK_STUDENTS = [
-  { id: 1, name: "Ahmet Yılmaz", grade: "8. Sınıf", phone: "0555 123 4567", email: "ahmet@ogrenci.com", status: "Aktif", lastActive: "2 saat önce" },
-  { id: 2, name: "Ayşe Demir", grade: "7. Sınıf", phone: "0532 987 6543", email: "ayse@ogrenci.com", status: "Riskli", lastActive: "3 gün önce" },
-  { id: 3, name: "Can Kaya", grade: "8. Sınıf", phone: "0544 321 0987", email: "can@ogrenci.com", status: "Aktif", lastActive: "15 dk önce" },
-  { id: 4, name: "Zeynep Çelik", grade: "5. Sınıf", phone: "0505 555 1122", email: "zeynep@ogrenci.com", status: "Aktif", lastActive: "1 gün önce" },
-];
+  // Check if user is actually a coach or admin
+  // const { data: profile } = await supabase
+  //   .from('profiles')
+  //   .select('role')
+  //   .eq('id', user.id)
+  //   .single();
 
-export default function CoachDashboardPage() {
+  // if (profile?.role === 'student') {
+  //   redirect("/dashboard");
+  // }
+
+  // Get total students
+  const { data: students, count: studentCount } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact' })
+    .eq('role', 'student');
+
+  // Get total completed pomodoros
+  const { count: pomodoroCount } = await supabase
+    .from('pomodoro_sessions')
+    .select('*', { count: 'exact', head: true });
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
@@ -18,17 +40,17 @@ export default function CoachDashboardPage() {
         <div>
           <h1 className="text-3xl font-extrabold mb-2">Hoş Geldin, Eğitmen! 👋</h1>
           <p className="text-foreground/60 text-lg">
-            Bugün {MOCK_STUDENTS.length} öğrencinin sana ihtiyacı var.
+            Bugün {studentCount || 0} öğrencinin sana ihtiyacı var.
           </p>
         </div>
         <div className="flex gap-4">
           <div className="bg-card px-6 py-3 rounded-2xl border border-foreground/5 shadow-sm text-center">
             <p className="text-xs text-foreground/60 uppercase font-bold tracking-wider mb-1">Toplam Öğrenci</p>
-            <p className="text-2xl font-black text-primary">{MOCK_STUDENTS.length}</p>
+            <p className="text-2xl font-black text-primary">{studentCount || 0}</p>
           </div>
           <div className="bg-card px-6 py-3 rounded-2xl border border-foreground/5 shadow-sm text-center">
-            <p className="text-xs text-foreground/60 uppercase font-bold tracking-wider mb-1">Riskli</p>
-            <p className="text-2xl font-black text-red-500">1</p>
+            <p className="text-xs text-foreground/60 uppercase font-bold tracking-wider mb-1">Toplam Pomodoro</p>
+            <p className="text-2xl font-black text-brand-orange">{pomodoroCount || 0}</p>
           </div>
         </div>
       </div>
@@ -45,64 +67,46 @@ export default function CoachDashboardPage() {
             <thead>
               <tr className="bg-foreground/5 text-foreground/60 text-sm">
                 <th className="p-4 font-bold">Öğrenci Adı</th>
-                <th className="p-4 font-bold">Sınıf</th>
-                <th className="p-4 font-bold">İletişim Bilgileri</th>
-                <th className="p-4 font-bold">Durum</th>
-                <th className="p-4 font-bold text-center">Aksiyon</th>
+                <th className="p-4 font-bold">Rol</th>
+                <th className="p-4 font-bold">Kayıt Tarihi</th>
+                <th className="p-4 font-bold">Aksiyon</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-foreground/5">
-              {MOCK_STUDENTS.map((student) => (
+              {students?.map((student) => (
                 <tr key={student.id} className="hover:bg-foreground/[0.02] transition-colors group">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-blue to-brand-purple flex items-center justify-center text-white font-bold shadow-sm">
-                        {student.name.split(' ').map(n => n[0]).join('')}
+                        {student.email ? student.email[0].toUpperCase() : "?"}
                       </div>
                       <div>
-                        <p className="font-bold text-foreground group-hover:text-primary transition-colors cursor-pointer">{student.name}</p>
-                        <p className="text-xs text-foreground/50">Son giriş: {student.lastActive}</p>
+                        <p className="font-bold text-foreground group-hover:text-primary transition-colors cursor-pointer">{student.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="p-4 font-medium text-foreground/80">{student.grade}</td>
-                  <td className="p-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-foreground/80">
-                        <Phone size={14} className="text-foreground/40" />
-                        {student.phone}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-foreground/80">
-                        <Mail size={14} className="text-foreground/40" />
-                        {student.email}
-                      </div>
-                    </div>
+                  <td className="p-4 font-medium text-foreground/80">{student.role}</td>
+                  <td className="p-4 font-medium text-foreground/80">
+                    {new Date(student.created_at).toLocaleDateString('tr-TR')}
                   </td>
                   <td className="p-4">
-                    <div className="flex flex-col gap-1">
-                      {student.status === "Aktif" ? (
-                        <span className="flex items-center gap-1 text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-md w-max">
-                          <CheckCircle2 size={14} /> Düzenli Çalışıyor
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-md w-max">
-                          <ShieldAlert size={14} /> Takip Edilmeli
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4 text-center">
                     <button className="p-2 text-foreground/40 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
                       <MoreVertical size={20} />
                     </button>
                   </td>
                 </tr>
               ))}
+              {(!students || students.length === 0) && (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-foreground/50">
+                    Henüz kayıtlı öğrenci bulunmuyor.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
-
     </div>
   );
 }

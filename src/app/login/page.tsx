@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
-// Supabase will be imported here: import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"login" | "register">("login");
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,23 +18,33 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Fake delay for UI mock
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const supabase = createClient();
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
       
-      // Real integration will look like this:
-      // const supabase = createClient();
-      // if (mode === 'login') {
-      //   const { error } = await supabase.auth.signInWithPassword({ email, password });
-      //   if (error) throw error;
-      // } else {
-      //   const { error } = await supabase.auth.signUp({ email, password });
-      //   if (error) throw error;
-      // }
-      
-      window.location.href = "/dashboard";
+      if (authError) throw authError;
+
+      // Check role to redirect
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile?.role === 'admin') {
+          router.push("/admin");
+        } else if (profile?.role === 'coach') {
+          router.push("/coach");
+        } else {
+          router.push("/dashboard");
+        }
+      }
+
     } catch (err: any) {
-      setError(err.message || "Bir hata oluştu.");
-    } finally {
+      setError(err.message || "Giriş yapılamadı. Bilgilerinizi kontrol edin.");
       setLoading(false);
     }
   };
@@ -50,12 +61,10 @@ export default function LoginPage() {
             <span className="text-white text-3xl font-black italic -rotate-3 tracking-tighter">AÇ</span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight mb-2 text-slate-900 dark:text-white">
-            {mode === "login" ? "Tekrar Hoş Geldin!" : "Aramıza Katıl"}
+            Tekrar Hoş Geldin!
           </h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">
-            {mode === "login" 
-              ? "Hedeflerine kaldığın yerden devam et." 
-              : "Sınavı şansa değil, sisteme bırak."}
+            Hedeflerine kaldığın yerden devam et.
           </p>
         </div>
 
@@ -86,9 +95,7 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <div className="flex justify-between items-center pl-1">
               <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Şifre</label>
-              {mode === "login" && (
-                <a href="#" className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:underline">Şifremi Unuttum</a>
-              )}
+              <a href="#" className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:underline">Şifremi Unuttum</a>
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
@@ -114,7 +121,7 @@ export default function LoginPage() {
               <Loader2 className="animate-spin" size={20} />
             ) : (
               <>
-                {mode === "login" ? "Giriş Yap" : "Hesap Oluştur"}
+                Giriş Yap
                 <ArrowRight size={20} />
               </>
             )}
@@ -122,12 +129,12 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
-          {mode === "login" ? "Hesabın yok mu? " : "Zaten hesabın var mı? "}
+          Hesabın yok mu?
           <button 
-            onClick={() => setMode(mode === "login" ? "register" : "login")}
+            onClick={() => router.push('/register')}
             className="font-bold text-cyan-600 dark:text-cyan-400 hover:underline ml-1"
           >
-            {mode === "login" ? "Hemen Kaydol" : "Giriş Yap"}
+            Hemen Kaydol
           </button>
         </div>
       </div>
