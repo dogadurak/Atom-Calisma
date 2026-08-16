@@ -1,5 +1,7 @@
 # AtomÇalışma 🚀
 
+🌐 **Canlı Site:** [https://atom-calisma.vercel.app](https://atom-calisma.vercel.app)
+
 > *"Sınavı Şansa Değil, Sisteme Bırak"*
 
 AtomÇalışma, LGS ve ortaokul öğrencilerine erken yaşta geniş bakış açıları kazandırmayı, onlara başarıya giden yolu çizmeyi ve akademik olarak desteklemeyi hedefleyen **%100 ücretsiz, kâr amacı gütmeyen bir sosyal girişim** projesidir. 
